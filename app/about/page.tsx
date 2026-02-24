@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { connection } from 'next/server';
 
-// Next.js 16: SSR behavior is default when no 'use cache' is used
-// Dynamic content must be wrapped in Suspense
+// Force fully dynamic rendering — prevents PPR from caching the Suspense
+// shell on the CDN while the ServerInfo component streams in separately.
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'About - Dynamic Blog',
