@@ -1,19 +1,19 @@
 import Link from 'next/link';
-import { Suspense } from 'react';
 import { connection } from 'next/server';
 
-// Force fully dynamic rendering — prevents PPR from caching the Suspense
-// shell on the CDN while the ServerInfo component streams in separately.
-export const dynamic = 'force-dynamic';
+// This page demonstrates SSR behavior. With cacheComponents enabled, pages
+// without 'use cache' are dynamic by default. We call connection() to access
+// request-time data and avoid the Suspense boundary so PPR doesn't split
+// the page into a cached shell + streamed dynamic chunk (which the CDN
+// can't properly reassemble).
 
 export const metadata = {
   title: 'About - Dynamic Blog',
   description: 'Learn more about our dynamic blog platform and caching experiments.',
 };
 
-// Dynamic server info component
-async function ServerInfo() {
-  // Next.js 16: Must call connection() before using new Date() in dynamic pages
+export default async function AboutPage() {
+  // connection() signals this is a dynamic page that needs request-time data
   await connection();
 
   // Get server-side data that changes on each request
@@ -36,57 +36,6 @@ async function ServerInfo() {
   // Simulate some processing time to demonstrate SSR
   await new Promise(resolve => setTimeout(resolve, 50));
 
-  return (
-    <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 border border-blue-200 dark:border-blue-600">
-      <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-        Live Server Information
-      </h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Rendered At (UTC)</div>
-          <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.renderTime}</div>
-        </div>
-        <div>
-          <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Server Timestamp</div>
-          <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.timestamp}</div>
-        </div>
-        <div>
-          <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Node.js Version</div>
-          <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.nodeVersion}</div>
-        </div>
-        <div>
-          <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Platform</div>
-          <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.platform}</div>
-        </div>
-      </div>
-
-      <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md">
-        <p className="text-sm text-yellow-800 dark:text-yellow-200">
-          💡 Refresh this page to see the timestamp update - demonstrating server-side rendering!
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Loading fallback for server info
-function ServerInfoLoading() {
-  return (
-    <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 border border-blue-200 dark:border-blue-600 animate-pulse">
-      <div className="h-6 bg-zinc-200 dark:bg-zinc-700 rounded w-1/3 mb-4"></div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i}>
-            <div className="h-4 bg-zinc-200 dark:bg-zinc-700 rounded w-1/2 mb-2"></div>
-            <div className="h-5 bg-zinc-200 dark:bg-zinc-700 rounded w-3/4"></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export default function AboutPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <div className="mx-auto max-w-4xl px-6 py-12">
@@ -153,7 +102,7 @@ export default function AboutPage() {
             </div>
           </section>
 
-          {/* Server-Side Info */}
+          {/* Server-Side Info — rendered inline (no Suspense) to prevent PPR */}
           <section className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg border border-blue-200 dark:border-blue-700 p-8">
             <h2 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
               Server-Side Rendering Demo
@@ -162,9 +111,35 @@ export default function AboutPage() {
               This page is server-side rendered on every request. The information below changes with each page load:
             </p>
 
-            <Suspense fallback={<ServerInfoLoading />}>
-              <ServerInfo />
-            </Suspense>
+            <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 border border-blue-200 dark:border-blue-600">
+              <h3 className="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
+                Live Server Information
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Rendered At (UTC)</div>
+                  <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.renderTime}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Server Timestamp</div>
+                  <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.timestamp}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Node.js Version</div>
+                  <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.nodeVersion}</div>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Platform</div>
+                  <div className="font-mono text-sm text-zinc-900 dark:text-zinc-100">{serverInfo.platform}</div>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-md">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  💡 Refresh this page to see the timestamp update - demonstrating server-side rendering!
+                </p>
+              </div>
+            </div>
           </section>
 
           {/* Features */}
