@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withSurrogateKey } from '@pantheon-systems/nextjs-cache-handler';
 import { cacheTag, cacheLife } from 'next/cache';
 import { connection } from 'next/server';
 
 // Cached function using 'use cache: remote' for RUNTIME caching
-// This enables Surrogate-Key header propagation for CDN cache invalidation
 async function fetchPostsRemote() {
   'use cache: remote';
   cacheTag('api-posts-remote', 'external-data-remote');
@@ -25,7 +23,7 @@ async function fetchPostsRemote() {
   return { posts, cachedAt };
 }
 
-async function handler(_request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
 
   try {
@@ -45,12 +43,9 @@ async function handler(_request: NextRequest) {
       duration_ms: duration,
       fetched_at: cachedAt,
       tags: ['api-posts-remote', 'external-data-remote'],
-      description: 'Runtime caching with use cache: remote for CDN Surrogate-Key support'
+      description: 'Runtime caching with use cache: remote'
     }, {
       headers: {
-        // CDN-friendly cache headers for edge caching with Surrogate-Key invalidation
-        // s-maxage: CDN caches for 1 hour
-        // stale-while-revalidate: serve stale while revalidating in background
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=60',
       }
     });
@@ -68,6 +63,3 @@ async function handler(_request: NextRequest) {
     );
   }
 }
-
-// Wrap handler with withSurrogateKey to automatically set Surrogate-Key headers
-export const GET = withSurrogateKey(handler, { debug: true });
