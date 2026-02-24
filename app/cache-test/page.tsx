@@ -552,6 +552,12 @@ export default function CacheTestPage() {
               Test SSR on About
             </Link>
             <Link
+              href="/cdn-demo"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-white bg-cyan-600 hover:bg-cyan-700 rounded-md transition-colors"
+            >
+              CDN Demo
+            </Link>
+            <Link
               href="/"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-300 bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600 rounded-md transition-colors"
             >

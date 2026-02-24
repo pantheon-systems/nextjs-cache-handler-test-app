@@ -1,8 +1,4 @@
-// Middleware for:
-// 1. waitUntil() background task tests (via event.waitUntil())
-// 2. Pass-through for other routes (Surrogate-Key headers set by withSurrogateKey wrapper)
-//
-// See: /api/posts/with-tags/route.ts for example usage of withSurrogateKey
+// Middleware for waitUntil() background task tests (via event.waitUntil())
 //
 // NOTE: Middleware runs in Edge runtime, so we cannot use @google-cloud/storage directly.
 // Instead, we call an internal API endpoint that runs in Node.js runtime.

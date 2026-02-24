@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cacheTag } from 'next/cache';
+import { connection } from 'next/server';
 import { randomUUID } from 'crypto';
 
 /**
@@ -8,24 +9,20 @@ import { randomUUID } from 'crypto';
  * GET /cdnprobe
  *
  * Returns a JSON response with a unique generation timestamp and nonce.
- * Uses 'use cache' with cacheTag('cdnprobe') so the cache handler tracks
- * this entry and can clear it via revalidatePath/revalidateTag.
- *
- * Sets the Surrogate-Key header explicitly to 'cdnprobe' so the CDN
- * (Fastly) can purge this response via key-based invalidation when
- * onRevalidateComplete fires.
+ * Uses 'use cache: remote' with cacheTag('cdnprobe') so the cache handler
+ * tracks this entry and can clear it via revalidatePath/revalidateTag.
  *
  * Test pattern:
- *   1. Request → cache handler stores entry, CDN caches with Surrogate-Key
+ *   1. Request → cache handler stores entry, CDN caches response
  *   2. Wait for CDN Age > 0
- *   3. revalidatePath('/cdnprobe') → cache handler invalidates entry
- *      → onRevalidateComplete → CDN purge via DELETE /cache/keys/cdnprobe
+ *   3. revalidatePath('/cdnprobe') or revalidateTag('cdnprobe')
+ *      → cache handler invalidates entry → edge cache cleared
  *   4. Request again → origin generates new timestamp
  *   5. Assert new timestamp !== old timestamp → purge worked
  */
 
 async function generateProbeData() {
-  'use cache';
+  'use cache: remote';
   cacheTag('cdnprobe');
 
   const now = new Date();
@@ -38,12 +35,14 @@ async function generateProbeData() {
 }
 
 export async function GET(_request: NextRequest) {
+  // Defer to request time to ensure runtime caching
+  await connection();
+
   const data = await generateProbeData();
 
   return NextResponse.json(data, {
     headers: {
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=0',
-      'Surrogate-Key': 'cdnprobe',
     },
   });
 }
