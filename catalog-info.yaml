@@ -1,0 +1,10 @@
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: nextjs-cache-handler-test-app
+  description: Test application for Next.js cache handler
+spec:
+  type: service
+  lifecycle: production
+  owner: developer-experience
