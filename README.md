@@ -17,7 +17,7 @@ This application is deployed to Pantheon and used by automated E2E tests to vali
 The E2E tests for this application are located in the [`nextjs-automation`](https://github.com/pantheon-systems/nextjs-automation) repository at:
 - `tests/playwright-tests/cache-handler/`
 
-Tests run on a schedule (every 6 hours) via GitHub Actions and validate cache handler behavior over time.
+Tests run on a schedule (every 4 hours) via GitHub Actions and validate cache handler behavior over time.
 
 ## Pages
 
@@ -78,7 +78,7 @@ npm start
 
 ## Deployment to Pantheon
 
-This application is configured for deployment to Pantheon using the Next.js runtime.
+This application is configured for deployment to Pantheon using the Next.js runtime. How a change reaches the site, how to check it and how to undo it: [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ### Prerequisites
 
@@ -90,7 +90,7 @@ This application is configured for deployment to Pantheon using the Next.js runt
 
 The application uses:
 - **Cache Handler**: `@pantheon-systems/nextjs-cache-handler` (auto-detects GCS or file-based)
-- **Next.js**: 15.5.9
+- **Next.js**: 16.x (`^16.1.6` in package.json)
 - **Node.js**: 20.x (required)
 
 ### Cache Behavior
@@ -102,7 +102,7 @@ The application uses:
 ## Testing
 
 This application is tested by automated E2E tests that:
-1. Run on a schedule (every 6 hours)
+1. Run on a schedule (every 4 hours)
 2. Validate all caching strategies
 3. Track cache persistence over time
 4. Verify ISR revalidation timing
@@ -151,11 +151,20 @@ The application can fetch data from:
 
 For E2E testing, **real API mode is required** because mock mode bypasses `fetch()` calls and doesn't test the cache handler.
 
+## Rollback
+
+- **When:** a merged change breaks the test site or makes the cache-handler E2E suite fail for reasons other than a cache-handler bug.
+- **Recover:** revert the PR on `main`, then have the Pantheon site rebuilt from `main`. A rebuild does not restore the previous dependency versions, because there is no lockfile.
+- **Verify:** the next run of the [cache-handler E2E workflow](https://github.com/pantheon-systems/nextjs-automation/actions/workflows/cache-handler-e2e.yml) is green.
+- **Who:** developer-experience in `#ask-hosting` (nobody is paged).
+
+Full procedure and its known gaps: [DEPLOYMENT.md#rollback](DEPLOYMENT.md#rollback).
+
 ## Related Repositories
 
 - **Cache Handler Package**: [`nextjs-cache-handler`](https://github.com/pantheon-systems/nextjs-cache-handler)
 - **E2E Tests**: [`nextjs-automation`](https://github.com/pantheon-systems/nextjs-automation)
-- **GitHub Actions**: [Scheduled E2E Cache Validation](.github/workflows/e2e-cache-validation.yml)
+- **GitHub Actions**: [Cache Handler E2E](https://github.com/pantheon-systems/nextjs-automation/blob/main/.github/workflows/cache-handler-e2e.yml) (in nextjs-automation)
 
 ## License
 
